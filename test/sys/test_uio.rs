@@ -22,7 +22,7 @@ fn test_writev() {
         let left = to_write.len() - consumed;
         let slice_len = if left <= 64 { left } else { thread_rng().gen_range(64, cmp::min(256, left)) };
         let b = &to_write[consumed..consumed+slice_len];
-        iovecs.push(IoVec::from_slice(b));
+        iovecs.push(b);
         consumed += slice_len;
     }
     let pipe_res = pipe();
@@ -66,7 +66,7 @@ fn test_readv() {
     }
     let mut iovecs = Vec::with_capacity(storage.len());
     for v in storage.iter_mut() {
-        iovecs.push(IoVec::from_mut_slice(&mut v[..]));
+        iovecs.push(&mut v[..]);
     }
     let pipe_res = pipe();
     assert!(pipe_res.is_ok());
@@ -83,7 +83,7 @@ fn test_readv() {
     // Cccumulate data from iovecs
     let mut read_buf = Vec::with_capacity(to_write.len());
     for iovec in iovecs.iter() {
-        read_buf.extend(iovec.as_slice().iter().map(|x| x.clone()));
+        read_buf.extend(iovec.iter().map(|x| x.clone()));
     }
     // Check whether iovecs contain all written data
     assert_eq!(read_buf.len(), to_write.len());

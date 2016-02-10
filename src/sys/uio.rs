@@ -2,24 +2,18 @@
 #![allow(improper_ctypes)]
 
 use {Errno, Result};
-use libc::{c_int, c_void, size_t, off_t};
+use libc::{self, c_int, c_void, size_t, off_t};
 use std::marker::PhantomData;
 use std::os::unix::io::RawFd;
 
 mod ffi {
-    use super::IoVec;
-    use libc::{ssize_t, c_int, size_t, off_t, c_void};
+    //use super::IoVec;
+    use libc::{ssize_t, size_t, off_t, c_void};
     use std::os::unix::io::RawFd;
 
+    pub use libc::{readv, writev};
+
     extern {
-        // vectorized version of write
-        // doc: http://man7.org/linux/man-pages/man2/writev.2.html
-        pub fn writev(fd: RawFd, iov: *const IoVec<&[u8]>, iovcnt: c_int) -> ssize_t;
-
-        // vectorized version of read
-        // doc: http://man7.org/linux/man-pages/man2/readv.2.html
-        pub fn readv(fd: RawFd, iov: *const IoVec<&mut [u8]>, iovcnt: c_int) -> ssize_t;
-
         // vectorized write at a specified offset
         // doc: http://man7.org/linux/man-pages/man2/pwritev.2.html
         #[cfg(feature = "preadv_pwritev")]
@@ -44,14 +38,14 @@ mod ffi {
     }
 }
 
-pub fn writev(fd: RawFd, iov: &[IoVec<&[u8]>]) -> Result<usize> {
-    let res = unsafe { ffi::writev(fd, iov.as_ptr(), iov.len() as c_int) };
+pub fn writev(fd: RawFd, iov: &[&[u8]]) -> Result<usize> {
+    let res = unsafe { ffi::writev(fd, iov.as_ptr() as *const libc::iovec, iov.len() as c_int) };
 
     Errno::result(res).map(|r| r as usize)
 }
 
-pub fn readv(fd: RawFd, iov: &mut [IoVec<&mut [u8]>]) -> Result<usize> {
-    let res = unsafe { ffi::readv(fd, iov.as_ptr(), iov.len() as c_int) };
+pub fn readv(fd: RawFd, iov: &mut [&mut [u8]]) -> Result<usize> {
+    let res = unsafe { ffi::readv(fd, iov.as_ptr() as *const libc::iovec, iov.len() as c_int) };
 
     Errno::result(res).map(|r| r as usize)
 }
