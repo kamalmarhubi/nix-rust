@@ -32,6 +32,8 @@ rand = "0.3.8"
 tempdir = "0.3"
 tempfile = "2"
 nix-test = { path = "nix-test", version = "0.0.1" }
+error-chain = "0.10.0"  # Used for the shell example.
+scopeguard = "0.3.2"  # Used for the shell example.
 
 [[test]]
 name = "test"
